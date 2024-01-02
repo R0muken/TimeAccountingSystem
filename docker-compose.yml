@@ -1,0 +1,75 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    container_name: db_psql
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    networks:
+      - djangonetwork
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: accountingsystem:latest
+    container_name: app
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    ports:
+      - 8001:8000
+    command:
+            bash -c "python manage.py migrate &&
+                     python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - djangonetwork
+
+
+  redis:
+    image: redis
+    networks:
+      - djangonetwork
+    ports:
+      - "6379:6379"
+
+  celery:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - app
+    networks:
+      - djangonetwork
+
+  celery-beat:
+    build: .
+    command: celery -A config beat -l info
+    volumes:
+        - .:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - app
+    networks:
+      - djangonetwork
+
+networks:
+  djangonetwork:
+    driver: bridge
+
+volumes:
+  pgdata:

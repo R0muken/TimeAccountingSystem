@@ -1,0 +1,6 @@
+/celerybeat-schedule.dir
+/celerybeat-schedule.dat
+/celerybeat-schedule.bak
+/.env
+/.pytest_cache/
+.idea
