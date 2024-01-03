@@ -21,8 +21,6 @@ class ReadingSession(models.Model):
         """
         Save the end time of a reading session and update the database.
 
-        Args:
-            reading_session (ReadingSession): The ReadingSession instance to be updated.
         Returns:
             None
         """
@@ -31,6 +29,15 @@ class ReadingSession(models.Model):
 
     @classmethod
     def get_reading_time_for_n_days(cls, user_id, days: int):
+        """
+        Calculates reading time for n days
+
+         Args:
+            user_id (int).
+            days (int):
+         Returns:
+            reading_session (ReadingSession): The ReadingSession instance to be updated.
+        """
         current_time = timezone.now()
         time_n_days_ago = current_time - timezone.timedelta(days=days)
 
