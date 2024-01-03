@@ -1,17 +1,14 @@
 import time
-from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from api.reading_session.models import ReadingSession
 from api.book.models import Book
-from api.reading_session.serializers import ReadingSessionSerializer
-from django.utils import timezone
 
 
 class ReadingSessionView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get_book(self, pk: int):
         """
         Retrieves a book from the database based by pk.
@@ -26,18 +23,6 @@ class ReadingSessionView(APIView):
             return book
         except Book.DoesNotExist:
             return None
-
-    def save_reading_session(self, reading_session: ReadingSession):
-        """
-        Save the end time of a reading session and update the database.
-
-        Args:
-            reading_session (ReadingSession): The ReadingSession instance to be updated.
-        Returns:
-            None
-        """
-        reading_session.end_time = timezone.now()
-        reading_session.save()
 
     def post(self, request, pk: int):
         """
@@ -57,12 +42,12 @@ class ReadingSessionView(APIView):
 
         active_session_with_current_book = ReadingSession.objects.filter(user=user, book=book, end_time=None).first()
         if active_session_with_current_book:
-            self.save_reading_session(active_session_with_current_book)
+            active_session_with_current_book.save_reading_session()
             return Response({"status": "success", 'message': "Reading session ended successfully"})
 
         active_session_with_another_book = ReadingSession.objects.filter(user=user, end_time=None).first()
         if active_session_with_another_book:
-            self.save_reading_session(active_session_with_another_book)
+            active_session_with_another_book.save_reading_session()
 
         ReadingSession.objects.create(user=user, book=book)
         return Response({"status": "success", "message": "Reading session started successfully"})
@@ -70,6 +55,7 @@ class ReadingSessionView(APIView):
 
 class ReadingSessionUserStatisticView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request):
         """
         Handles the request to retrieve user's reading statistics.
@@ -91,6 +77,7 @@ class ReadingSessionUserStatisticView(APIView):
 
 
 class ReadingSessionBooksStatisticView(APIView):
+
     def get(self, request):
         """
         Handles the request to retrieve user's reading statistics per book.
